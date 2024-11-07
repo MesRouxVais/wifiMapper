@@ -5,8 +5,7 @@ import fr.mesrouxvais.wifimapper.R
 import java.util.Date
 import java.util.Locale
 import android.graphics.Color
-import fr.mesrouxvais.wifimapper.BluetoothCenter
-import fr.mesrouxvais.wifimapper.BluetoothCommunication
+import fr.mesrouxvais.wifimapper.MainActivity
 import java.nio.charset.StandardCharsets
 import java.text.SimpleDateFormat
 
@@ -47,19 +46,10 @@ class UserInputCenter private constructor(private val context: Context){
                 Terminal.getInstance().displayOnTerminal("[r]:$whoIsIt", Color.GREEN)
             }
             command.equals("turnOnBl", ignoreCase = true) -> {
-                Terminal.getInstance().displayOnTerminal("[r]:Trying to turn the bluetooth on", Color.GREEN)
-                BluetoothCenter.getInstance().enableBluetooth()
             }
             command.equals("turnOffBl", ignoreCase = true) -> {
-                Terminal.getInstance().displayOnTerminal("[r]:Trying to turn the bluetooth off", Color.GREEN)
-                BluetoothCenter.getInstance().disableBLuetooth()
             }
             command.equals("getBlDs", ignoreCase = true) -> {
-                Terminal.getInstance().displayOnTerminal("[r]:Trying get the bluetooth devices list", Color.GREEN)
-                for(item in BluetoothCenter.getInstance().getBluetoothDevices()){
-                    var itemName = item.name
-                    Terminal.getInstance().displayOnTerminal("[r]:---$itemName", Color.GREEN)
-                }
             }
             command.startsWith("conByNameBL", ignoreCase = true) -> {
                 val parts = command.split(" ", limit = 2)
@@ -69,15 +59,9 @@ class UserInputCenter private constructor(private val context: Context){
                 }
                 val deviceName = parts[1].trim()
                 Terminal.getInstance().displayOnTerminal("[+]:Trying to connect to device: $deviceName", Color.GREEN)
-
-                val success = BluetoothCenter.getInstance().connectToDeviceByName(deviceName)
-                if (!success) {
-                    Terminal.getInstance().displayOnTerminal("[!]:Connection failed. Please check device name and try again.", Color.RED)
-                }
             }
             command.equals("disBL", ignoreCase = true) -> {
                 Terminal.getInstance().displayOnTerminal("[r]:Trying to disconnect to device", Color.GREEN)
-                BluetoothCenter.getInstance().disconnect()
 
             }
             command.startsWith("sendbl", ignoreCase = true) -> {
@@ -88,12 +72,10 @@ class UserInputCenter private constructor(private val context: Context){
                 }
                 val message = parts[1].trim()
                 Terminal.getInstance().displayOnTerminal("[+]:Trying to send message to device: $message", Color.GREEN)
-                BluetoothCommunication.sendData(message.toByteArray(StandardCharsets.US_ASCII))
 
             }
             command.equals("startBlListener", ignoreCase = true) -> {
                 Terminal.getInstance().displayOnTerminal("[+]:Trying to send message to start a bluetooth listener", Color.GREEN)
-                BluetoothCommunication.startDataListener()
 
             }
             else -> {
