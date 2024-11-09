@@ -6,6 +6,7 @@ import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothGatt
 import android.bluetooth.BluetoothGattCallback
 import android.bluetooth.BluetoothGattCharacteristic
+import android.bluetooth.BluetoothGattDescriptor
 import android.bluetooth.BluetoothGattService
 import android.bluetooth.BluetoothProfile
 import android.bluetooth.le.BluetoothLeScanner
@@ -18,10 +19,12 @@ import android.os.Build
 import android.os.Handler
 import android.util.Log
 import androidx.annotation.RequiresApi
+import androidx.annotation.RequiresPermission
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import fr.mesrouxvais.wifimapper.userInterface.Terminal
 import java.lang.ref.WeakReference
+import java.nio.charset.Charset
 import java.util.UUID
 
 @RequiresApi(Build.VERSION_CODES.S)
@@ -168,6 +171,9 @@ object BluetoothCenter {
                                     Terminal.getInstance().displayOnTerminal("services " + getShortUuid(services.uuid) +" of type " + services.type,  Color.WHITE)
                                     for(characteristic in services.characteristics){
                                         Terminal.getInstance().displayOnTerminal("\t characteristics " + getShortUuid(characteristic.uuid)+" of type " + getCharacteristicType(characteristic.properties),  Color.WHITE)
+                                        characteristicsMap.put(getShortUuid(characteristic.uuid), characteristic)
+
+
                                     }
                                 }
                             }
@@ -176,7 +182,6 @@ object BluetoothCenter {
 
 
                     }
-                    close()
                 }else{
                     Terminal.getInstance().displayOnTerminal("[!]: Connection timeout", Color.RED)
                 }
@@ -231,21 +236,44 @@ object BluetoothCenter {
         }
 
 
-        @Deprecated("Deprecated in Java")
         override fun onCharacteristicRead(
+            gatt: BluetoothGatt,
+            characteristic: BluetoothGattCharacteristic,
+            value: ByteArray,
+            status: Int
+        ) {
+            super.onCharacteristicRead(gatt, characteristic, status)
+            Terminal.getInstance().displayOnTerminal(" receved ${value.toString(Charset.defaultCharset())} ", Color.WHITE)
+        }
+
+        override fun onCharacteristicWrite(
             gatt: BluetoothGatt,
             characteristic: BluetoothGattCharacteristic,
             status: Int
         ) {
-            super.onCharacteristicRead(gatt, characteristic, status)
-            Terminal.getInstance().displayOnTerminal("[-]: onCharacteristicRead", Color.CYAN)
+            super.onCharacteristicWrite(gatt, characteristic, status)
+            Terminal.getInstance().displayOnTerminal("finish writing ", Color.WHITE)
+        }
+
+        override fun onCharacteristicChanged(
+            gatt: BluetoothGatt?,
+            characteristic: BluetoothGattCharacteristic
+        ) {
+            super.onCharacteristicChanged(gatt, characteristic)
+            Terminal.getInstance().displayOnTerminal("new notification ", Color.WHITE)
         }
 
     }
 
-    fun readCharacteristic(serviceUUID: UUID, characteristicUUID: UUID) {
-        val service = bluetoothGatt?.getService(serviceUUID)
-        val characteristic = service?.getCharacteristic(characteristicUUID)
+
+
+
+
+    val characteristicsMap = HashMap<String, BluetoothGattCharacteristic>()
+    @RequiresPermission(Manifest.permission.BLUETOOTH_CONNECT)
+    fun readCharacteristic(shortUUID: String) {
+
+        val characteristic = characteristicsMap[shortUUID]
 
         if (characteristic != null) {
             val success = bluetoothGatt?.readCharacteristic(characteristic)
@@ -253,33 +281,66 @@ object BluetoothCenter {
         }
     }
 
+    fun writeCharacteristic(shortUUID: String) {
+        val characteristic = characteristicsMap[shortUUID]
+        if (characteristic != null) {
+            Terminal.getInstance().displayOnTerminal("write on ${characteristic.uuid} ", Color.WHITE)
+        }
+        if (characteristic != null) {
+            // First write the new value to our local copy of the characteristic
+            characteristic.value = "Tom".toByteArray()
+
+            //...Then send the updated characteristic to the device
+            val success = bluetoothGatt?.writeCharacteristic(characteristic)
+
+            Log.v("bluetooth", "Write status: $success")
+        }
+    }
+
+    fun startReceivingCharacteristicUpdates(shortUUID: String) {
+
+        val characteristic = characteristicsMap[shortUUID]
+        if (characteristic != null) {
+            bluetoothGatt?.setCharacteristicNotification(characteristic, true)
+
+            val CLIENT_CONFIG_DESCRIPTOR = UUID.fromString("00002902-0000-1000-8000-00805f9b34fb")
+            val desc = characteristic.getDescriptor(CLIENT_CONFIG_DESCRIPTOR)
+            desc?.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE)
+            bluetoothGatt?.writeDescriptor(desc)
+        }
+    }
 
 
 
+
+    fun getStatus(){
+        var statuts = connectionState == BluetoothProfile.STATE_CONNECTED
+        Terminal.getInstance().displayOnTerminal("[-]: connected ? $statuts", Color.WHITE)
+    }
 
 
 //util
 
-private fun getShortUuid(uuid: UUID): String {
-    // Extraire les 16 premiers bits de l'UUID (les 4 premiers caractères hexadécimaux)
-    val shortUuidHex = uuid.toString().substring(4, 8)  // Premier segment de 4 caractères hexadécimaux
+    private fun getShortUuid(uuid: UUID): String {
+        // Extraire les 16 premiers bits de l'UUID (les 4 premiers caractères hexadécimaux)
+        val shortUuidHex = uuid.toString().substring(4, 8)  // Premier segment de 4 caractères hexadécimaux
 
-    // Convertir en entier et afficher sous forme hexadécimale
-    return "0x$shortUuidHex"
-}
-
-private fun getCharacteristicType(type: Int): String{
-    if (type == BluetoothGattCharacteristic.PROPERTY_READ) {
-        return "READ"
-    }
-    if (type == BluetoothGattCharacteristic.PROPERTY_WRITE) {
-        return "WRITE"
-    }
-    if (type == BluetoothGattCharacteristic.PROPERTY_NOTIFY) {
-        return "NOTIFY"
+        // Convertir en entier et afficher sous forme hexadécimale
+        return "0x$shortUuidHex"
     }
 
-    return "UNKNOWN"
-}
+    private fun getCharacteristicType(type: Int): String{
+        if (type == BluetoothGattCharacteristic.PROPERTY_READ) {
+            return "READ"
+        }
+        if (type == BluetoothGattCharacteristic.PROPERTY_WRITE) {
+            return "WRITE"
+        }
+        if (type == BluetoothGattCharacteristic.PROPERTY_NOTIFY) {
+            return "NOTIFY"
+        }
+
+        return "UNKNOWN"
+    }
 
 }

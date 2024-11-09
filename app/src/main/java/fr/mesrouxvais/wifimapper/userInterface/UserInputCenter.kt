@@ -9,6 +9,7 @@ import android.os.Build
 import androidx.annotation.RequiresApi
 import fr.mesrouxvais.wifimapper.BluetoothCenter
 import java.text.SimpleDateFormat
+import java.util.UUID
 
 @RequiresApi(Build.VERSION_CODES.S)
 class UserInputCenter private constructor(private val context: Context){
@@ -83,18 +84,30 @@ class UserInputCenter private constructor(private val context: Context){
                 BluetoothCenter.close()
 
             }
-            command.startsWith("sendbl", ignoreCase = true) -> {
+            command.startsWith("reading", ignoreCase = true) -> {
                 val parts = command.split(" ", limit = 2)
                 if (parts.size < 2) {
-                    Terminal.getInstance().displayOnTerminal("[!]:Please specify a message name (sendbl message)", Color.YELLOW)
+                    Terminal.getInstance().displayOnTerminal("[!]:Please specify a UUID (reading UUID)", Color.YELLOW)
                     return
                 }
-                val message = parts[1].trim()
-                Terminal.getInstance().displayOnTerminal("[+]:Trying to send message to device: $message", Color.GREEN)
+                Terminal.getInstance().displayOnTerminal("[+]:Trying read", Color.GREEN)
+
+                BluetoothCenter.readCharacteristic(parts[1].trim())
 
             }
-            command.equals("startBlListener", ignoreCase = true) -> {
-                Terminal.getInstance().displayOnTerminal("[+]:Trying to send message to start a bluetooth listener", Color.GREEN)
+            command.startsWith("write", ignoreCase = true) -> {
+                val parts = command.split(" ", limit = 2)
+                if (parts.size < 2) {
+                    Terminal.getInstance().displayOnTerminal("[!]:Please specify a UUID ", Color.YELLOW)
+                    return
+                }
+                Terminal.getInstance().displayOnTerminal("[+]:Trying write", Color.GREEN)
+
+                BluetoothCenter.writeCharacteristic(parts[1].trim());
+
+            }
+            command.equals("status", ignoreCase = true) -> {
+                BluetoothCenter.getStatus()
 
             }
             else -> {

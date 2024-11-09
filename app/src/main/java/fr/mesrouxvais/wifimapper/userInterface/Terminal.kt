@@ -5,14 +5,16 @@ import android.text.SpannableStringBuilder
 import android.text.style.ForegroundColorSpan
 import android.widget.ScrollView
 import android.widget.TextView
+import java.util.LinkedList
 
-class Terminal private constructor(private val terminalOutput: TextView, private val scrollView: ScrollView){
-    private val outputBuilder = SpannableStringBuilder()
+class Terminal private constructor(private val terminalOutput: TextView, private val scrollView: ScrollView) {
+    // Utiliser une LinkedList comme buffer circulaire avec une taille maximale
+    private val maxLines = 100
+    private val messageBuffer = LinkedList<Pair<String, Int>>() // Pair<message, color>
 
     companion object {
         private var instance: Terminal? = null
 
-        // Méthode pour créer l'instance du singleton
         fun initialize(terminalOutput: TextView, scrollView: ScrollView) {
             if (instance == null) {
                 instance = Terminal(terminalOutput, scrollView)
@@ -27,24 +29,42 @@ class Terminal private constructor(private val terminalOutput: TextView, private
     }
 
     fun displayOnTerminal(message: String, color: Int) {
-        if (message.isNotBlank()) {
-            // Créer un SpannableStringBuilder pour accumuler les messages
-            val spannableMessage = SpannableStringBuilder("$message\n").apply {
-                setSpan(ForegroundColorSpan(color), 0, length, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
-            }
+        if (message.isBlank()) return
 
-            // Ajouter le message formaté au TextView
-            outputBuilder.append(spannableMessage)
-            terminalOutput.text = outputBuilder // Mettre à jour le texte
+        // Ajouter le nouveau message au buffer
+        messageBuffer.add(Pair(message, color))
 
-            // Défilement vers le bas
+        // Retirer les messages les plus anciens si nécessaire
+        while (messageBuffer.size > maxLines) {
+            messageBuffer.removeFirst()
+        }
+
+        // Reconstruire le texte avec seulement les dernières lignes
+        val builder = SpannableStringBuilder()
+        messageBuffer.forEach { (msg, clr) ->
+            val start = builder.length
+            builder.append("$msg\n")
+            builder.setSpan(
+                ForegroundColorSpan(clr),
+                start,
+                builder.length,
+                Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+            )
+        }
+
+        // Mettre à jour le TextView sur le thread principal
+        terminalOutput.post {
+            terminalOutput.text = builder
             scrollView.post {
-                scrollView.fullScroll(ScrollView.FOCUS_DOWN) // Défilement vers le bas
+                scrollView.fullScroll(ScrollView.FOCUS_DOWN)
             }
         }
     }
 
-    fun clearTerminal(){
-        outputBuilder.clear()
+    fun clearTerminal() {
+        messageBuffer.clear()
+        terminalOutput.post {
+            terminalOutput.text = ""
+        }
     }
 }
