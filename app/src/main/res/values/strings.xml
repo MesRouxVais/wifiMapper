@@ -1,5 +1,18 @@
 <resources>
     <string name="app_name">wifiMapper</string>
 
-    <string name="easter_egg">a nice guy v(start ble)</string>
+    <string name="easter_egg">a nice guy v(start ble whit documentation)</string>
+
+    <string name="all_commands">Available commands:\n
+    - help: Display this help message\n
+    - clear: Clear the terminal\n
+    - checkpoint: Display current timestamp\n
+    - askBlPerms: Request Bluetooth permissions\n
+    - turnOnBl: Enable Bluetooth\n
+    - turnOffBl: Disable Bluetooth\n
+    - getBlDs: Scan for Bluetooth devices\n
+    - conByNameBL [DeviceName]: Connect to a Bluetooth device by name\n
+    - disBL: Disconnect current Bluetooth device\n
+    - sendbl [message]: Send message via Bluetooth\n
+    - startBlListener: Start Bluetooth listener</string>
 </resources>
