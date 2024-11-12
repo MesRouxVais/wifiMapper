@@ -1,26 +1,29 @@
 package fr.mesrouxvais.wifimapper.userInterface
 
 import android.content.Context
-import fr.mesrouxvais.wifimapper.R
-import java.util.Date
-import java.util.Locale
 import android.graphics.Color
 import android.os.Build
 import androidx.annotation.RequiresApi
 import fr.mesrouxvais.wifimapper.BluetoothCenter
+import fr.mesrouxvais.wifimapper.R
+import fr.mesrouxvais.wifimapper.database.DatabaseHelper
 import java.text.SimpleDateFormat
-import java.util.UUID
+import java.util.Date
+import java.util.Locale
+
 
 @RequiresApi(Build.VERSION_CODES.S)
 class UserInputCenter private constructor(private val context: Context){
 
     companion object {
+        private var databaseHelper: DatabaseHelper? = null
         private var instance: UserInputCenter? = null
 
         // Méthode pour créer l'instance du singleton
         fun initialize(context: Context) {
             if (instance == null) {
                 instance = UserInputCenter(context)
+                databaseHelper = DatabaseHelper(context);
                 Terminal.getInstance().displayOnTerminal("[-]:User Input Center is initialized.", Color.WHITE)
             } else {
                 throw IllegalStateException("UserInputCenter has already been initialized.")
@@ -110,6 +113,32 @@ class UserInputCenter private constructor(private val context: Context){
                 BluetoothCenter.getStatus()
 
             }
+            command.equals("getn", ignoreCase = true) -> {
+                BluetoothCenter.startReceivingUpdates()
+
+            }
+
+
+            command.startsWith("addp", ignoreCase = true) -> {
+                val parts = command.split(" ", limit = 4)
+                if (parts.size < 4) {
+                    Terminal.getInstance().displayOnTerminal("[!]:Please specify all data, only get ${parts.size} ", Color.YELLOW)
+                    return
+                }
+                Terminal.getInstance().displayOnTerminal("[+]:adding ...", Color.GREEN)
+
+                databaseHelper?.addPerson(parts[1].trim(), parts[2].trim(), parts[3].trim().toInt());
+                Terminal.getInstance().displayOnTerminal("[!]:person list :  ", Color.CYAN)
+                for (person in databaseHelper?.allPersons!!){
+                    Terminal.getInstance().displayOnTerminal("\t${person.lastName}", Color.CYAN)
+                    Terminal.getInstance().displayOnTerminal("\t${person.firstName}", Color.CYAN)
+                    Terminal.getInstance().displayOnTerminal("\t${person.age}", Color.CYAN)
+                    Terminal.getInstance().displayOnTerminal("", Color.CYAN)
+                }
+
+            }
+
+
             else -> {
                 Terminal.getInstance().displayOnTerminal("[r*]:invalid entry\"$command\"", Color.RED)
             }

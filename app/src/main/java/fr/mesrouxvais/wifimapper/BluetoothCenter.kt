@@ -260,14 +260,24 @@ object BluetoothCenter {
             characteristic: BluetoothGattCharacteristic
         ) {
             super.onCharacteristicChanged(gatt, characteristic)
-            Terminal.getInstance().displayOnTerminal("new notification ", Color.WHITE)
+            Terminal.getInstance().displayOnTerminal("new notification " + characteristic.value.contentToString(), Color.WHITE)
         }
 
     }
 
 
+    @RequiresPermission(Manifest.permission.BLUETOOTH_CONNECT)
+    fun startReceivingUpdates() {
+        val characteristic = characteristicsMap["0xfef4"]
+        if (characteristic != null) {
+            bluetoothGatt?.setCharacteristicNotification(characteristic, true)
 
-
+            val CLIENT_CONFIG_DESCRIPTOR = UUID.fromString("00002902-0000-1000-8000-00805f9b34fb")
+            val desc = characteristic.getDescriptor(CLIENT_CONFIG_DESCRIPTOR)
+            desc?.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE)
+            bluetoothGatt?.writeDescriptor(desc)
+        }
+    }
 
     val characteristicsMap = HashMap<String, BluetoothGattCharacteristic>()
     @RequiresPermission(Manifest.permission.BLUETOOTH_CONNECT)
