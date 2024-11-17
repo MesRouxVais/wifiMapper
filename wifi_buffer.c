@@ -25,6 +25,11 @@ bool wifi_buffer_init(size_t initial_capacity) {
     return true;
 }
 
+void wifi_buffer_reset(void){
+    g_wifi_buffer->count = 0;
+}
+
+
 bool wifi_buffer_add_ap_info(const wifi_ap_record_t* ap_info) {
     if (!g_wifi_buffer || !ap_info) return false;
 
@@ -60,15 +65,17 @@ char* wifi_buffer_get_formatted_data(void) {
     char* output = malloc(buffer_size);
     if (!output) return NULL;
     
-    output[0] = '\0';
-    size_t total_length = 0;
+    // Initialisation de la chaîne de sortie avec le nombre de points Wi-Fi en première ligne
+    snprintf(output, buffer_size, "%zu\n", g_wifi_buffer->count);
+    size_t total_length = strlen(output);  // On commence avec la longueur de la première ligne
     
+    // Ajouter les détails des points Wi-Fi
     for (size_t i = 0; i < g_wifi_buffer->count; i++) {
         wifi_entry_t* entry = &g_wifi_buffer->entries[i];
         char line[LINE_BUFFER_SIZE];
         
         snprintf(line, LINE_BUFFER_SIZE, 
-                "\"%s\",%d,\"%d\",\"%d\",\"%d\",%d\n",
+                "%s,%d,%d,%d,%d,%d\n",
                 entry->ssid, 
                 entry->rssi,
                 entry->authmode, 
@@ -92,6 +99,7 @@ char* wifi_buffer_get_formatted_data(void) {
     
     return output;
 }
+
 
 void wifi_buffer_free(void) {
     if (g_wifi_buffer) {

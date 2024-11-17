@@ -26,6 +26,7 @@ typedef struct {
 extern wifi_buffer_t* g_wifi_buffer;
 
 // Fonctions publiques
+void wifi_buffer_reset(void);
 bool wifi_buffer_init(size_t initial_capacity);
 bool wifi_buffer_add_ap_info(const wifi_ap_record_t* ap_info);
 char* wifi_buffer_get_formatted_data(void);
