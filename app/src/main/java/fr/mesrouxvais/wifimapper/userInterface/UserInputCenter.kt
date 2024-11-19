@@ -2,9 +2,12 @@ package fr.mesrouxvais.wifimapper.userInterface
 
 import android.content.Context
 import android.graphics.Color
+import android.location.Location
 import android.os.Build
 import androidx.annotation.RequiresApi
+import com.google.android.gms.location.FusedLocationProviderClient
 import fr.mesrouxvais.wifimapper.BluetoothCenter
+import fr.mesrouxvais.wifimapper.LocationCenter
 import fr.mesrouxvais.wifimapper.R
 import fr.mesrouxvais.wifimapper.database.DatabaseHelper
 import java.text.SimpleDateFormat
@@ -137,9 +140,15 @@ class UserInputCenter private constructor(private val context: Context){
                 }
 
             }
+            command.equals("getp", ignoreCase = true) -> {
+                databaseHelper?.exportDatabaseToCSV("test case")
 
+            }
+            command.equals("getposition", ignoreCase = true) -> {
+                LocationCenter.getInstance().startLocationPing()
+                LocationCenter.getInstance().startLocationUpdates()
 
-            else -> {
+            }else -> {
                 Terminal.getInstance().displayOnTerminal("[r*]:invalid entry\"$command\"", Color.RED)
             }
         }

@@ -4,10 +4,20 @@ import android.content.ContentValues
 import android.content.Context
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
+import android.graphics.Color
+import fr.mesrouxvais.wifimapper.userInterface.Terminal
+import java.io.BufferedWriter
+import java.io.File
+import java.io.FileOutputStream
+import java.io.OutputStreamWriter
+import java.lang.ref.WeakReference
 
 
 class DatabaseHelper(context: Context?) :
     SQLiteOpenHelper(context, DATABASE_NAME, null, DATABASE_VERSION) {
+
+    private val contextRef: WeakReference<Context> = WeakReference(context)
+
     override fun onCreate(db: SQLiteDatabase) {
         val CREATE_TABLE = ("CREATE TABLE " + TABLE_NAME + "("
                 + COLUMN_ID + " INTEGER PRIMARY KEY,"
@@ -20,6 +30,37 @@ class DatabaseHelper(context: Context?) :
     override fun onUpgrade(p0: SQLiteDatabase?, p1: Int, p2: Int) {
         TODO("Not yet implemented")
     }
+
+    fun exportDatabaseToCSV(csvFileName: String) {
+        val db = this.writableDatabase
+        val cursor = db.rawQuery("SELECT * FROM " + TABLE_NAME, null)
+
+        // Ouvrir un fichier CSV
+        val file = File(contextRef.get()?.getExternalFilesDir(null),csvFileName)
+        val outputStream = FileOutputStream(file)
+        val writer = BufferedWriter(OutputStreamWriter(outputStream))
+
+        // Écrire l'en-tête du fichier CSV
+        val columnNames = cursor.columnNames
+        writer.write(columnNames.joinToString(","))
+        writer.newLine()
+
+        // Écrire les données du curseur dans le fichier CSV
+        while (cursor.moveToNext()) {
+            val rowData = (0 until cursor.columnCount)
+                .map { cursor.getString(it) }
+                .joinToString(",")
+            writer.write(rowData)
+            writer.newLine()
+        }
+
+        writer.flush()
+        writer.close()
+        cursor.close()
+        Terminal.getInstance().displayOnTerminal("[-]: csv file ${file.name} created at ${file.path}", Color.WHITE)
+
+    }
+
 
     // Méthodes pour insérer, lire, mettre à jour et supprimer des données
     fun addPerson(firstName: String?, lastName: String?, age: Int): Long {

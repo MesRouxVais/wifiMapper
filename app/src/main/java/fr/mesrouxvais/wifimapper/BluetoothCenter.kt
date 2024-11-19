@@ -63,7 +63,8 @@ object BluetoothCenter {
 
         val requiredPermissions = arrayOf(
             Manifest.permission.BLUETOOTH_SCAN,
-            Manifest.permission.BLUETOOTH_CONNECT
+            Manifest.permission.BLUETOOTH_CONNECT,
+            Manifest.permission.ACCESS_FINE_LOCATION
         )
 
         val missingPermissions = requiredPermissions.filter { permission ->
@@ -260,7 +261,7 @@ object BluetoothCenter {
             characteristic: BluetoothGattCharacteristic
         ) {
             super.onCharacteristicChanged(gatt, characteristic)
-            Terminal.getInstance().displayOnTerminal("new notification " + characteristic.value.contentToString(), Color.WHITE)
+            Terminal.getInstance().displayOnTerminal("new notification " + String(characteristic.value, Charsets.UTF_8), Color.WHITE)
         }
 
     }

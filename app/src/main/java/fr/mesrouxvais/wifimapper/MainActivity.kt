@@ -35,6 +35,7 @@ class MainActivity : AppCompatActivity() {
         UserInputCenter.initialize(this)
         PermissionCenter.initialize(this,this)
         BluetoothCenter.initialize(this)
+        LocationCenter.initialize(this)
 
 
 
