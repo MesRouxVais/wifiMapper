@@ -33,6 +33,8 @@ object BluetoothCenter {
 
     private var mainActivity: WeakReference<MainActivity>? = null
     private lateinit var bluetoothAdapter: BluetoothAdapter
+    var writing: Boolean = false
+    var reading: Boolean = false
 
     fun initialize(mainActivity: MainActivity) {
         this.mainActivity = WeakReference(mainActivity)
@@ -245,6 +247,8 @@ object BluetoothCenter {
         ) {
             super.onCharacteristicRead(gatt, characteristic, status)
             Terminal.getInstance().displayOnTerminal(" receved ${value.toString(Charset.defaultCharset())} ", Color.WHITE)
+            EntrySynchronizer.updateStatement(value.toString(Charset.defaultCharset()))
+            reading = false
         }
 
         override fun onCharacteristicWrite(
@@ -254,6 +258,9 @@ object BluetoothCenter {
         ) {
             super.onCharacteristicWrite(gatt, characteristic, status)
             Terminal.getInstance().displayOnTerminal("finish writing ", Color.WHITE)
+            writing = false
+            readCharacteristic("0xfef4")
+
         }
 
         override fun onCharacteristicChanged(
@@ -262,6 +269,7 @@ object BluetoothCenter {
         ) {
             super.onCharacteristicChanged(gatt, characteristic)
             Terminal.getInstance().displayOnTerminal("new notification " + String(characteristic.value, Charsets.UTF_8), Color.WHITE)
+
         }
 
     }
@@ -287,6 +295,7 @@ object BluetoothCenter {
         val characteristic = characteristicsMap[shortUUID]
 
         if (characteristic != null) {
+            reading = true
             val success = bluetoothGatt?.readCharacteristic(characteristic)
             Log.v("bluetooth", "Read status: $success")
         }
@@ -302,9 +311,13 @@ object BluetoothCenter {
             characteristic.value = "Tom".toByteArray()
 
             //...Then send the updated characteristic to the device
+            writing = true
             val success = bluetoothGatt?.writeCharacteristic(characteristic)
 
             Log.v("bluetooth", "Write status: $success")
+
+            //BLE hard code
+            LocationCenter.getInstance().getSingleLocationUpdate();
         }
     }
 
@@ -328,6 +341,22 @@ object BluetoothCenter {
         var statuts = connectionState == BluetoothProfile.STATE_CONNECTED
         Terminal.getInstance().displayOnTerminal("[-]: connected ? $statuts", Color.WHITE)
     }
+
+    //hard code BLE wifimapper
+
+    fun startLogging(){
+        TimeMaster.startCycle {
+            writeCharacteristic("0xdead")
+        }
+    }
+
+
+
+
+
+
+
+
 
 
 //util

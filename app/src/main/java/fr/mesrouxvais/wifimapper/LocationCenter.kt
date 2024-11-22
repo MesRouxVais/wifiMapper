@@ -72,7 +72,6 @@ class LocationCenter (private val context: Context){
                         "[-]:Location : ${location.latitude}, ${location.longitude}",
                         Color.MAGENTA
                     )
-
                     // Informations supplémentaires possibles
                     Log.d("LocationInfo", """
                 Latitude: ${location.latitude}
@@ -123,6 +122,41 @@ class LocationCenter (private val context: Context){
     private fun stopLocationUpdates() {
         fusedLocationClient.removeLocationUpdates(locationCallback)
         isLocationUpdatesStarted = false
+    }
+
+    @SuppressLint("MissingPermission")
+    fun getSingleLocationUpdate() {
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(context)
+
+        fusedLocationClient.getCurrentLocation(
+            Priority.PRIORITY_HIGH_ACCURACY,
+            null // CancellationToken can be null
+        ).addOnSuccessListener { location ->
+            if (location != null) {
+                Terminal.getInstance().displayOnTerminal(
+                    "[-]:Location : ${location.latitude}, ${location.longitude}",
+                    Color.MAGENTA
+                )
+                EntrySynchronizer.updateLocation(location.latitude,location.longitude)
+                Log.d("LocationInfo", """
+                Latitude: ${location.latitude}
+                Longitude: ${location.longitude}
+                Précision: ${location.accuracy} mètres
+                Vitesse: ${location.speed} km/h
+                Altitude: ${location.altitude} m
+            """.trimIndent())
+            } else {
+                Terminal.getInstance().displayOnTerminal(
+                    "Location could not be retrieved",
+                    Color.RED
+                )
+            }
+        }.addOnFailureListener { exception ->
+            Terminal.getInstance().displayOnTerminal(
+                "Location error: ${exception.message}",
+                Color.RED
+            )
+        }
     }
 
 }

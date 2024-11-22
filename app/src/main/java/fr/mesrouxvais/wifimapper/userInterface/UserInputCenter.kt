@@ -120,6 +120,10 @@ class UserInputCenter private constructor(private val context: Context){
                 BluetoothCenter.startReceivingUpdates()
 
             }
+            command.equals("startAuto", ignoreCase = true) -> {
+                BluetoothCenter.startLogging()
+
+            }
 
 
             command.startsWith("addp", ignoreCase = true) -> {
@@ -145,8 +149,7 @@ class UserInputCenter private constructor(private val context: Context){
 
             }
             command.equals("getposition", ignoreCase = true) -> {
-                LocationCenter.getInstance().startLocationPing()
-                LocationCenter.getInstance().startLocationUpdates()
+                LocationCenter.getInstance().getSingleLocationUpdate()
 
             }else -> {
                 Terminal.getInstance().displayOnTerminal("[r*]:invalid entry\"$command\"", Color.RED)
